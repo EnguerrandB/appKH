@@ -9,3 +9,4 @@ numpy==2.1.2
 opencv-python==4.10.0.84
 PyMuPDF==1.24.11
 Werkzeug==3.0.4
+gunicorn
