@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 import shutil
 from pdf2image import convert_from_path
 from PIL import Image
+import gzip
 import imagehash
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -19,7 +20,7 @@ app = Flask(__name__)
 IMAGE_FOLDER = 'static/images'
 PDF_FOLDER = 'static/pdf'
 UPLOAD_FOLDER = 'uploads'
-MODEL_PATH = './modèle_GedKHV2.pkl'  # Chemin vers le modèle
+MODEL_PATH = './modèle.pkl.gz'  # Chemin vers le modèle
 app.config['IMAGE_FOLDER'] = IMAGE_FOLDER
 app.config['PDF_FOLDER'] = PDF_FOLDER
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -28,6 +29,18 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 for folder in [IMAGE_FOLDER, PDF_FOLDER, UPLOAD_FOLDER]:
     if not os.path.exists(folder):
         os.makedirs(folder)
+
+def load_model(model_path):
+    # Utiliser gzip pour ouvrir le fichier compressé
+    try:
+        with gzip.open(model_path, 'rb') as f:
+            model_data = pickle.load(f)
+        return model_data
+    except Exception as e:
+        print(f"Erreur lors du chargement du modèle : {e}")
+        return None
+
+model_data = load_model(MODEL_PATH)
 
 # Charger le modèle lorsque l'application démarre
 def load_model(model_path):

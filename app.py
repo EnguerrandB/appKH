@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Configuration du dossier de téléchargement
 UPLOAD_FOLDER = 'uploads'
-MODEL_PATH = './modèle.pkl'  # Chemin vers le modèle
+MODEL_PATH = './modèle.pkl.gz'  # Chemin vers le modèle
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = {'pdf'}
 
