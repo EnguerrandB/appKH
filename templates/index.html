@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Détection et suppression des pages blanches</title>
+    <style>
+      /* Style général */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      label {
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+
+      input[type="file"],
+      input[type="text"] {
+        margin-bottom: 20px;
+        padding: 10px;
+        width: 100%;
+        max-width: 400px;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #5cb85c;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #4cae4c;
+      }
+
+      #output {
+        margin-top: 20px;
+      }
+
+      /* Conteneur des pages blanches */
+      .page-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+      }
+
+      .page-item {
+        text-align: center;
+        border: 1px solid #ddd;
+        background-color: white;
+        border-radius: 5px;
+        padding: 10px;
+        width: 200px;
+      }
+
+      .page-item img {
+        max-width: 100%;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .page-item input[type="checkbox"] {
+        margin-top: 10px;
+      }
+
+      .submit-btn {
+        margin-top: 20px;
+        padding: 10px 30px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .submit-btn:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Détection et suppression des pages blanches</h1>
+
+    <!-- Formulaire pour télécharger le fichier PDF -->
+    <form
+      id="upload-form"
+      action="/process-file"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <label for="file">Choisissez un fichier PDF :</label>
+      <input
+        type="file"
+        id="file"
+        name="file"
+        accept="application/pdf"
+        required
+      />
+      <button type="submit">Analyser</button>
+    </form>
+
+    <div id="output">
+      <!-- Affichage des résultats de l'analyse et de la suggestion de nom -->
+      {% if suggested_name %}
+      <h2 style="text-align: center">Nom suggéré pour le fichier :</h2>
+      <p style="text-align: center; font-size: 18px; color: #007bff">
+        {{ suggested_name }}
+      </p>
+      {% endif %}
+
+      <!-- Affichage du fichier avec la date la plus proche -->
+      {% if closest_file %}
+      <h2 style="text-align: center">Fichier le plus proche :</h2>
+      <p style="text-align: center; font-size: 18px; color: #007bff">
+        Nom du fichier : {{ closest_file.name }}
+      </p>
+      <p style="text-align: center; font-size: 18px; color: #007bff">
+        Date trouvée : {{ closest_file.date }}
+      </p>
+      {% else %}
+      <p style="text-align: center; color: red;">
+        Aucun fichier avec une date n'a été trouvé.
+      </p>
+      {% endif %}
+
+      <!-- Affichage des dates détectées ou message si aucune date n'est trouvée -->
+      {% if dates %}
+      <h2 style="text-align: center">Dates détectées :</h2>
+      {% if dates|length > 0 and dates[0] is not string %}
+      <ul>
+        {% for date in dates %}
+        <li>{{ date }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p style="text-align: center">{{ dates }}</p>
+      <!-- Affiche "Aucune date trouvée" correctement -->
+      {% endif %} 
+      {% endif %}
+
+      <!-- Affichage des pages blanches détectées -->
+      {% if blank_pages %}
+      <form action="/remove-pages" method="POST">
+        <h2 style="text-align: center">Pages blanches détectées :</h2>
+        <div class="page-list">
+          {% for page, image in blank_pages|zip(images) %}
+          <div class="page-item">
+            <img
+              src="{{ url_for('display_image', filename=image) }}"
+              alt="Page blanche {{ page }}"
+            />
+            <label for="page-{{ page }}">Page {{ page }}</label>
+            <input
+              id="page-{{ page }}"
+              type="checkbox"
+              name="pages"
+              value="{{ page }}"
+            />
+          </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="file_name" value="{{ file_name }}" />
+
+        <!-- Champ pour entrer le nom du fichier avec la suggestion basée sur la similarité -->
+        <label for="new_file_name">Nom du fichier :</label>
+        <input
+          type="text"
+          id="new_file_name"
+          name="new_file_name"
+          value="{{ suggested_name }}"
+          required
+          style="width: 100%; padding: 10px; margin: 10px 0"
+        />
+
+        <button class="submit-btn" type="submit">Enregistrer</button>
+      </form>
+      {% endif %}
+
+      <!-- Affichage des erreurs éventuelles -->
+      {% if error %}
+      <p style="color: red; text-align: center">{{ error }}</p>
+      {% endif %}
+    </div>
+  </body>
+</html>
