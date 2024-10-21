@@ -18,4 +18,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Specify the command to run the app, using the PORT environment variable
-CMD ["sh", "-c", "gunicorn -b 0.0.0.0:$PORT test:app"]
+CMD ["sh", "-c", "gunicorn --timeout 60 -b 0.0.0.0:$PORT test:app"]
