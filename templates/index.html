@@ -19,6 +19,32 @@
         color: #333;
       }
 
+      .page-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+      }
+
+      .page-item {
+        text-align: center;
+        border: 1px solid #ddd;
+        background-color: white;
+        border-radius: 5px;
+        padding: 10px;
+        width: 200px;
+      }
+
+      .page-item img {
+        max-width: 100%;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .page-item input[type="checkbox"] {
+        margin-top: 10px;
+      }
+
       form {
         display: flex;
         flex-direction: column;
@@ -57,33 +83,6 @@
         margin-top: 20px;
       }
 
-      /* Conteneur des pages blanches */
-      .page-list {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 20px;
-      }
-
-      .page-item {
-        text-align: center;
-        border: 1px solid #ddd;
-        background-color: white;
-        border-radius: 5px;
-        padding: 10px;
-        width: 200px;
-      }
-
-      .page-item img {
-        max-width: 100%;
-        border-radius: 5px;
-        margin-bottom: 10px;
-      }
-
-      .page-item input[type="checkbox"] {
-        margin-top: 10px;
-      }
-
       .submit-btn {
         margin-top: 20px;
         padding: 10px 30px;
@@ -99,6 +98,42 @@
       .submit-btn:hover {
         background-color: #0056b3;
       }
+
+      /* Style pour réduire la taille des images */
+      .page-item img {
+        max-width: 200px;
+        max-height: 250px;
+        display: block;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      /* Style du menu déroulant */
+      select {
+        text-align: center;
+        width: 100%;
+        max-width: 400px;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        appearance: none;
+        background-color: white;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='none' stroke='gray' stroke-width='1px' d='M0 0l2 2 2-2'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px;
+      }
+
+      select:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      }
+
+  
     </style>
   </head>
   <body>
@@ -123,55 +158,58 @@
     </form>
 
     <div id="output">
-      <!-- Affichage des résultats de l'analyse et de la suggestion de nom -->
-      {% if suggested_name %}
-      <h2 style="text-align: center">Nom suggéré pour le fichier :</h2>
-      <p style="text-align: center; font-size: 18px; color: #007bff">
-        {{ suggested_name }}
-      </p>
-      {% endif %}
-
-      <!-- Affichage du fichier avec la date la plus proche -->
-      {% if closest_file %}
-      <h2 style="text-align: center">Fichier le plus proche :</h2>
-      <p style="text-align: center; font-size: 18px; color: #007bff">
-        Nom du fichier : {{ closest_file.name }}
-      </p>
-      <p style="text-align: center; font-size: 18px; color: #007bff">
-        Date trouvée : {{ closest_file.date }}
-      </p>
-      {% else %}
-      <p style="text-align: center; color: red;">
-        Aucun fichier avec une date n'a été trouvé.
-      </p>
-      {% endif %}
-
-      <!-- Affichage des dates détectées ou message si aucune date n'est trouvée -->
+      <!-- Affichage du menu déroulant pour toutes les dates proposées -->
       {% if dates %}
-      <h2 style="text-align: center">Dates détectées :</h2>
-      {% if dates|length > 0 and dates[0] is not string %}
-      <ul>
-        {% for date in dates %}
-        <li>{{ date }}</li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <p style="text-align: center">{{ dates }}</p>
-      <!-- Affiche "Aucune date trouvée" correctement -->
-      {% endif %} 
-      {% endif %}
+      <h2 style="text-align: center">Dates trouvées :</h2>
 
-      <!-- Affichage des pages blanches détectées -->
+      <!-- Afficher un menu déroulant pour permettre de choisir une date -->
+       <div style="display: flex; justify-content: center;">
+      <select id="date-selector" onchange="updateFileName()">
+        <option value="">-- Sélectionnez une date --</option>
+        {% for date in dates %}
+        <option value="{{ date }}">{{ date }}</option>
+        {% endfor %}
+      </select>
+    </div>
+      {% endif %}
+      </br>
+
+      <!-- Champ pour entrer le nom du fichier avec la suggestion basée sur la similarité -->
+      
+
+      <script>
+        // Fonction JavaScript pour mettre à jour le nom de fichier en fonction de la date sélectionnée
+        function updateFileName() {
+          var selectedDate = document.getElementById("date-selector").value;
+          var currentFileName = document.getElementById("new_file_name").value;
+        
+          // Si une date est sélectionnée
+          if (selectedDate) {
+            // Vérifier s'il y a déjà une date dans le format JJ.MM.AAAA ou similaire dans le nom du fichier
+            var datePattern = /\d{1,2}[-./]\d{1,2}[-./]\d{2,4}/;
+        
+            if (datePattern.test(currentFileName)) {
+              // Si une date existe déjà, on la remplace par la nouvelle date sélectionnée
+              var updatedFileName = currentFileName.replace(datePattern, selectedDate);
+            } else {
+              // Si aucune date n'est trouvée, on ajoute la date sélectionnée à la fin du nom de fichier
+              var updatedFileName = currentFileName.replace(/(\.pdf)$/, "_" + selectedDate + ".pdf");
+            }
+        
+            // Mettre à jour le champ texte avec le nouveau nom de fichier
+            document.getElementById("new_file_name").value = updatedFileName;
+          }
+        }
+        </script>
+
+        <!-- Affichage des pages blanches détectées -->
       {% if blank_pages %}
       <form action="/remove-pages" method="POST">
         <h2 style="text-align: center">Pages blanches détectées :</h2>
         <div class="page-list">
           {% for page, image in blank_pages|zip(images) %}
           <div class="page-item">
-            <img
-              src="{{ url_for('display_image', filename=image) }}"
-              alt="Page blanche {{ page }}"
-            />
+            <img src="{{ url_for('static', filename='images/' + image) }}" alt="Page blanche {{ page }}" />
             <label for="page-{{ page }}">Page {{ page }}</label>
             <input
               id="page-{{ page }}"
@@ -186,14 +224,15 @@
 
         <!-- Champ pour entrer le nom du fichier avec la suggestion basée sur la similarité -->
         <label for="new_file_name">Nom du fichier :</label>
-        <input
-          type="text"
-          id="new_file_name"
-          name="new_file_name"
-          value="{{ suggested_name }}"
-          required
-          style="width: 100%; padding: 10px; margin: 10px 0"
-        />
+      <input
+        type="text"
+        id="new_file_name"
+        name="new_file_name"
+        value="{{ suggested_name }}"
+        required
+        style="width: 100%; padding: 10px; margin: 10px 0"
+      />
+
 
         <button class="submit-btn" type="submit">Enregistrer</button>
       </form>
