@@ -401,57 +401,44 @@ def process_file():
     file = request.files['file']
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
     file.save(file_path)
-    
+
     try:
-        # Extraire le texte du PDF et trouver les dates
-        dates = extract_dates_from_pdf(file_path)
+        # Appeler la nouvelle fonction pour gérer le traitement du fichier
+        dates, closest_match = handle_file_processing(file_path)
+
         if not dates:
             dates = "Aucune date trouvée"
-
-        # Trouver le fichier le plus similaire en utilisant le modèle
-        closest_match = find_closest_file(file_path)
+        
         suggested_name = file.filename.split('.')[0]
         
         if closest_match:
             suggested_name = os.path.basename(closest_match).rpartition('.')[0]
 
-        # Si une date est trouvée, on l'ajoute au nom
+        # Normaliser et gérer les dates trouvées
         if dates and isinstance(dates, list) and len(dates) > 0:
-            print("Dates trouvées : ", dates)
-            
             # Normaliser toutes les dates dans la liste
             from collections import Counter
 
-            # Normaliser et filtrer les dates non valides
             normalized_dates = [normalize_date(date) for date in dates if normalize_date(date) is not None]
-
-            # Compter les occurrences de chaque date
             date_counts = Counter(normalized_dates)
-
-            # Trier les dates par leur fréquence d'occurrence, mais garder seulement les dates uniques
             sorted_dates = [date for date, count in date_counts.most_common()]
-
             # Afficher les dates triées et regroupées
             print("Dates trouvées (les plus fréquentes en premier) : ", sorted_dates)
-            
-            # Utiliser la première date détectée par défaut
             suggested_name = modify_old_filename_with_date(suggested_name, sorted_dates[0]) + ".pdf"
         else:
             suggested_name += "_modifié.pdf"
 
-        # Convertir le PDF en images
+        # Convertir le PDF en images et détecter les pages blanches
         images, _ = pdf_to_images(file_path)
-        
-        # Détecter les pages blanches et générer des images
         blank_pages, generated_images = detect_blank_pages_and_generate_images(images)
         
-        # Afficher les résultats dans le template HTML (sur la même page)
+        # Afficher les résultats dans le template HTML
         return render_template(
             'index.html',
             closest_file={'name': closest_match, 'date': sorted_dates[0] if dates else "Aucune date trouvée"},
             pages_and_images=list(zip(blank_pages, generated_images)),
             file_name=file.filename,
-            dates=sorted_dates,  # Passer la liste des dates détectées au template
+            dates=sorted_dates,
             blank_pages=blank_pages,
             images=generated_images,
             suggested_name=suggested_name
@@ -459,6 +446,16 @@ def process_file():
     
     except Exception as e:
         return render_template('index.html', error=f"Erreur lors du traitement du fichier : {str(e)}")
+
+def handle_file_processing(file_path):
+    """Traitement du fichier PDF pour extraire les dates et trouver le fichier le plus similaire."""
+    # Extraire le texte du PDF et trouver les dates
+    dates = extract_dates_from_pdf(file_path)
+    
+    # Trouver le fichier le plus similaire en utilisant le modèle
+    closest_match = find_closest_file(file_path)
+    
+    return dates, closest_match
 
 if __name__ == '__main__':
     app.run(debug=True)
