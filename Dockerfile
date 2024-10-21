@@ -17,5 +17,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of your app’s source code
 COPY . .
 
-# Specify the command to run the app
-CMD ["gunicorn", "-b", "0.0.0.0:$PORT", "test:app"]
+# Specify the command to run the app, using the PORT environment variable
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:$PORT test:app"]
